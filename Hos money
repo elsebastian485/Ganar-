@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Grabar cámara</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    video {
+      border: 2px solid #333;
+      width: 80%;
+      max-width: 500px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Grabar desde la cámara</h1>
+  <video id="video" autoplay playsinline></video><br>
+  <button id="startBtn">Iniciar grabación</button>
+  <button id="stopBtn" disabled>Detener y descargar</button>
+
+  <script>
+    const video = document.getElementById('video');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    let mediaRecorder;
+    let recordedChunks = [];
+
+    // Acceder a la cámara
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then((stream) => {
+        video.srcObject = stream;
+
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'grabacion.webm';
+          a.click();
+          recordedChunks = [];
+        };
+
+        startBtn.onclick = () => {
+          mediaRecorder.start();
+          startBtn.disabled = true;
+          stopBtn.disabled = false;
+        };
+
+        stopBtn.onclick = () => {
+          mediaRecorder.stop();
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+        };
+      })
+      .catch((err) => {
+        alert('Error al acceder a la cámara: ' + err);
+      });
+  </script>
+</body>
+</html>
